@@ -17,7 +17,7 @@ def main(argv):
 	havePort = False
 	#Get CL arguments
 	try:
-		opts, args = getopt.getopt(argv,"hp:l:", ["PORT=","LOG="])
+		opts, args = getopt.getopt(argv,"hp:l:", ["PORT=","LOG=","URL="])
 	except getopt.GetoptError:
 		print("Please enter an ip address and a port number")
 		sys.exit(2)
