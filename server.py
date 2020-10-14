@@ -13,6 +13,8 @@ def main(argv):
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	port = ''
 	log = ''
+	url = ''
+	havePort = False
 	#Get CL arguments
 	try:
 		opts, args = getopt.getopt(argv,"hp:l:", ["PORT=","LOG="])
@@ -21,7 +23,11 @@ def main(argv):
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == ("-p"):
-			port = arg
+			if havePort == False:
+				port = arg
+				havePort = True
+			else:
+				url = arg
 		if opt == ("-l"):
 			logging.basicConfig(filename=(os.getcwd() + '/' + arg), level=logging.INFO)
 
