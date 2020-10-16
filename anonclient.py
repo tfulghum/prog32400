@@ -1,5 +1,21 @@
 import socket
 import sys
+import struct
+
+#functions
+def flagSet(zeroPad, A, S, F):
+    if A:
+        print("A: ", A)
+        zeroPad[3] = zeroPad | b'4'
+
+    if S:
+        print("S: ", S)
+        zeroPad[3] = zeroPad | b'2'
+
+    if F:
+        print("F: ", F)
+        zeroPad[3] = zeroPad | b'1'
+    print("zeropad in function: ", zeroPad)
 
  
 
@@ -20,11 +36,25 @@ ackNumber = 100
 ackPad = 32 - sys.getsizeof(ackNumber)
 
 #Creates the unused portion
-zeroPad = 0x0000
+zeroPad = bytearray(4)
+print(zeroPad)
+
+#Set default for flags
+A = b'0'
+S = b'1'
+F = b'0'
+
 #Get flags from flag packer
+flagSet(zeroPad, A, S, F)
+
 
 #Then pack it all here
-myPacket = pack(seqPad,seqNumber,ackPad,ackNumber,zeroPad,flags)
+myPacket = struct.pack('!i', seqPad)
+myPacket += struct.pack('!i', seqNumber)
+myPacket += struct.pack('!i', ackPad)
+myPacket += struct.pack('!i', ackNumber)
+#myPacket += struct.pack('!i', zeroPad)
+#myPacket += struct.pack('!i', placeholder for flags at some point)
 
 # Create a UDP socket at client side
 
