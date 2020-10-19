@@ -1,4 +1,4 @@
-  
+import socket
 import socket
 import sys
 import struct
@@ -88,6 +88,7 @@ def msgParserPayload(msg):
 
 def packetLog(sNum, aNum, A, S, F, File_object, logType):
 	
+	#Converts from binary to string for logging purposes
 	if A == 1:
 		ACK = "ACK"
 	else:

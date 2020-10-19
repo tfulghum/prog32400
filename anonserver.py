@@ -36,6 +36,7 @@ def msgParser(msg):
 
 def packetLog(sNum, aNum, A, S, F, File_object, logType):
 	
+	#Converts from binary to string for logging purposes
 	if A == 1:
 		ACK = "ACK"
 	else:
@@ -60,7 +61,7 @@ def packetLog(sNum, aNum, A, S, F, File_object, logType):
 		File_object.write(f"RETRAN {sNum} {aNum} {ACK} {SEQ} {FIN}")
 
 
- #getting command line arguments
+#getting command line arguments
 for args in sys.argv:
     if args == '-p':
         localPort = int(sys.argv[sys.argv.index(args)+1])
@@ -76,6 +77,10 @@ def URLDownload(url):
 	#webcontent = response.read() I don't think we need this line for this program
 	return response
 }
+
+#Downloads the file from the URL given
+payload = URLDownload(url)
+
 
 localIP     = "localhost"
 #socket.gethostbyname(socket.gethostname())
