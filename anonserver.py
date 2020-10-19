@@ -42,6 +42,14 @@ for args in sys.argv:
         logfile = sys.argv[sys.argv.index(args)+1]
     if args == '-u':
         url = sys.argv[sys.argv.index(args)+1]
+		
+		
+def URLDownload(url):
+{
+	response = urllib.request.urlopen(url)
+	#webcontent = response.read() I don't think we need this line for this program
+	return response
+}
 
 localIP     = "localhost"
 #socket.gethostbyname(socket.gethostname())
