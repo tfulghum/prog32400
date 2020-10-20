@@ -2,6 +2,7 @@ import socket
 import struct
 import sys
 import urllib.request, urllib.error, urllib.parse
+import time
 
 def packThePacket(sNum, aNum, A, S, F):
     #This struct needs some work but will otherwise function
@@ -99,7 +100,7 @@ def fileParser(myFile, payloadNumber):
 
 def stopAndWait(mySocket, buffSiz, myHeader, myPayload, portNum, seqNumber, ackNumber, A, S, F, File_object):
     servMsg = 0
-    mySocket.settimeout(0.5)
+    mySocket.settimeout(100)
     
     #Can get rid of exponential backoff
     while not servMsg:
@@ -115,9 +116,10 @@ def stopAndWait(mySocket, buffSiz, myHeader, myPayload, portNum, seqNumber, ackN
             packetLog(seqNumber, ackNumber, A, S, F, File_object, logType)
             #I don't think we need this anymore
             #servMsg = "Message from Server {}".format(msgFromServer[0])
+        time.sleep(.5)
     return servMsg
 
-
+File_object = open(logfile, "w")
 doneSending = False
 counter = 1
 
@@ -145,6 +147,7 @@ while(go == 1):
         seqNumberR, ackNumberR, Ar, Sr, Fr = msgParser(recvInfo)
 
         print("Got ", seqNumberR, ackNumberR, Ar, Sr, Fr)
+        packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 0)
 
         tempVar = ackNumberR
 
@@ -155,6 +158,7 @@ while(go == 1):
             Ar = 1
 
         print("Sending ", seqNumberR, ackNumberR, Ar, Sr, Fr)
+        packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 1)
 
         handshakePack = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
         #Send ack back
@@ -165,6 +169,7 @@ while(go == 1):
         seqNumberR, ackNumberR, Ar, Sr, Fr = msgParser(recvInfo)
 
         print("Got ", seqNumberR, ackNumberR, Ar, Sr, Fr)
+        packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 0)
         
         Sr = 0
         tempVar = ackNumberR
@@ -189,14 +194,16 @@ while(go == 1):
             newSeqNumber = seqNumberR+len(currentPayload)
 			
             UDPServerSocket.sendto(newHeader, addr)
+            packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 0)
             UDPServerSocket.sendto(currentPayload, addr)
+            packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 1)
 			
             print("Sent payload number: ", counter)
 			
             counter = counter + 1
             
             print("Listening")
-            stopAndWait(UDPServerSocket, 96, newHeader, currentPayload, localPort, newSeqNumber, newAckNumber, Ar, Sr, Fr, myFile)
+            stopAndWait(UDPServerSocket, 96, newHeader, currentPayload, localPort, newSeqNumber, newAckNumber, Ar, Sr, Fr, File_object)
 			
         go = 0
 

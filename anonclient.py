@@ -185,8 +185,9 @@ UDPClientSocket.sendto(myPacket, serverAddressPort)
 #Payload loop
 while(not F):
 	#Get response from the server
-	msg = stopAndWait(UDPClientSocket, bufferSize, myPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
-	seqNumber, ackNumber, A, S, F = msgParser(msg)
+	header = stopAndWait(UDPClientSocket, bufferSize, myPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
+	payload = stopAndWait(UDPClientSocket, 512, myPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
+	seqNumber, ackNumber, A, S, F = msgParserPayload(header)
 	print(seqNumber, ackNumber, A, S, F)
 	
 	#Send seq and ack depending on recieved values
@@ -197,5 +198,6 @@ while(not F):
 	newSeqNumber = ackNumber + 1
 
 	myPacket = struct.pack(newSeqNumber, newAckNumber, A, S, F)#what is packer?
+	UDPClientSocket.sendto(myPacket, serverAddressPort)
 
 UDPClientSocket.close()
