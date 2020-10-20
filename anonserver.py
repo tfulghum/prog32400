@@ -73,14 +73,14 @@ for args in sys.argv:
 		
 		
 def URLDownload(url):
-
-	response = requests.get(url, stream = True)
-	#webcontent = response.read() I don't think we need this line for this program
-	return response
+	
+	url = 'http://' + url
+	with urllib.request.urlopen(url) as f:
+		html = f.read()
+	return html
 
 
 #Downloads the file from the URL given
-print(URLDownload(url))
 
 
 localIP     = "localhost"
