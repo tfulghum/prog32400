@@ -3,6 +3,8 @@ import struct
 import sys
 import urllib.request, urllib.error, urllib.parse
 import time
+import logging
+import os
 
 def packThePacket(sNum, aNum, A, S, F):
     #This struct needs some work but will otherwise function
@@ -36,7 +38,7 @@ def msgParser(msg):
     
     return seqNumber, ackNumber, A, S, F
 
-def packetLog(sNum, aNum, A, S, F, File_object, logType):
+def packetLog(sNum, aNum, A, S, F, logType):
 	
 	#Converts from binary to string for logging purposes
 	if A == 1:
@@ -56,11 +58,11 @@ def packetLog(sNum, aNum, A, S, F, File_object, logType):
 	
 	
 	if logType == 0:
-		File_object.write(f"RECV {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
+		logging.info(f"RECV {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
 	elif logType == 1:
-		File_object.write(f"SEND {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
+		logging.info(f"SEND {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
 	elif logType == 2:
-		File_object.write(f"RETRAN {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
+		logging.info(f"RETRAN {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
 
 
 #getting command line arguments
@@ -98,7 +100,7 @@ def fileParser(myFile, payloadNumber):
 	#Returns the payload portion
 	return myFile[(payloadNumber-1)*512 : ((payloadNumber*512)-1)], finished
 
-def stopAndWait(mySocket, buffSiz, myHeader, myPayload, portNum, seqNumber, ackNumber, A, S, F, File_object):
+def stopAndWait(mySocket, buffSiz, myHeader, myPayload, portNum, seqNumber, ackNumber, A, S, F):
     servMsg = 0
     mySocket.settimeout(300)
     
@@ -113,13 +115,22 @@ def stopAndWait(mySocket, buffSiz, myHeader, myPayload, portNum, seqNumber, ackN
             
             #Logs that a retransmit was made
             logType = 2
-            packetLog(seqNumber, ackNumber, A, S, F, File_object, logType)
+            packetLog(seqNumber, ackNumber, A, S, F, logType)
             #I don't think we need this anymore
             #servMsg = "Message from Server {}".format(msgFromServer[0])
         time.sleep(.5)
     return servMsg
 
-File_object = open(logfile, "a")
+def numberUpdater(seqNumber, ackNumber):
+    newAckNumber = seqNumber + 1
+    
+    if ackNumber == 0:
+        newSeqNumber = 100
+    else:
+        newSeqNumber = ackNumber
+    return newSeqNumber, newAckNumber
+
+logging.basicConfig(filename=(os.getcwd() + '/' + logfile), level=logging.INFO)
 doneSending = False
 counter = 1
 
@@ -144,16 +155,13 @@ while(go == 1):
         recvInfo, addr = UDPServerSocket.recvfrom(96)
 
         seqNumberR, ackNumberR, Ar, Sr, Fr = msgParser(recvInfo)
-        packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 0)
+        packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, 0)
 
-        tempVar = ackNumberR
-
-        ackNumberR = seqNumberR + 1
-        seqNumberR = 100
+        seqNumberR, ackNumberR = numberUpdater(seqNumberR, ackNumberR)
 
         if(Ar == 0):
             Ar = 1
-        packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 1)
+        packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, 1)
 
         handshakePack = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
         #Send ack back
@@ -163,7 +171,7 @@ while(go == 1):
         recvInfo, addr = UDPServerSocket.recvfrom(96)
         seqNumberR, ackNumberR, Ar, Sr, Fr = msgParser(recvInfo)
 
-        packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 0)
+        packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, 0)
         
         Sr = 0
         tempVar = ackNumberR
@@ -185,26 +193,24 @@ while(go == 1):
                     Fr = 1
             newHeader = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
 
-            newAckNumber = seqNumberR
-            newSeqNumber = seqNumberR+len(currentPayload)
+            seqNumberR, ackNumberR = numberUpdater(seqNumberR, ackNumberR)
 			
             UDPServerSocket.sendto(newHeader, addr)
-            packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 0)
+            packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, 0)
             UDPServerSocket.sendto(currentPayload, addr)
-            packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 1)
+            packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, 1)
 			
             print("Sent payload number: ", counter)
 			
             counter = counter + 1
             
-            stopAndWait(UDPServerSocket, 96, newHeader, currentPayload, localPort, newSeqNumber, newAckNumber, Ar, Sr, Fr, File_object)
+            stopAndWait(UDPServerSocket, 96, newHeader, currentPayload, localPort, seqNumberR, ackNumberR, Ar, Sr, Fr)
 			
         doneSending = False
         F = 0
         counter = 1
         print("Payload transfer complete")
         #Close the file here
-        File_object.close()
     except KeyboardInterrupt:
         print("Exiting now...")
         UDPServerSocket.close()

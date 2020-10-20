@@ -116,6 +116,16 @@ def packetLog(sNum, aNum, A, S, F, File_object, logType):
 	elif logType == 2:
 		File_object.write(f"RETRAN {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
 
+def numberUpdater(seqNumber, ackNumber):
+	
+	if seqNumber == None:
+		newSeqNumber = 1
+	else:
+		newSeqNumber = ackNumber
+	if ackNumber == None:
+		newAckNumber = 100
+	else:
+		newAckNumber = seqNumber + 512
 
 #getting command line arguments
 for args in sys.argv:
@@ -180,7 +190,7 @@ myPacket = packThePacket(seqNumber, ackNumber, A, S, F)
 
 #Second half of handshake
 UDPClientSocket.sendto(myPacket, serverAddressPort)
-	
+
 #Payload loop
 while(not F):
 	#Get response from the server
@@ -188,13 +198,12 @@ while(not F):
 	payload = UDPClientSocket.recvfrom(512)
 
 	seqNumber, ackNumber, A, S, F = msgParser(header[0])
-	
+	packetLog(seqNumber, ackNumber, A, S, F, File_object, 0)
 	#Send seq and ack depending on recieved values
-	if A:
-		newAckNumber = seqNumber+1
-
-	newAckNumber = seqNumber
-	newSeqNumber = ackNumber + 1
+	
+	print(seqNumber, ackNumber)
+	newSeqNumber, newAckNumber = numberUpdater(seqNumber, ackNumber)
+	packetLog(newSeqNumber, newAckNumber, A, S, F, File_object, 1)
 
 	myPacket = packThePacket(newSeqNumber, newAckNumber, A, S, F)
 	UDPClientSocket.sendto(myPacket, serverAddressPort)
