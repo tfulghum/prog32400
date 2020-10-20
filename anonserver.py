@@ -71,7 +71,7 @@ for args in sys.argv:
     if args == '-u':
         url = sys.argv[sys.argv.index(args)+1]
 		
-		
+#Gets the content of given url	
 def URLDownload(url):
 	
 	url = 'http://' + url
@@ -79,6 +79,7 @@ def URLDownload(url):
 		html = f.read()
 	return html
 	
+#Returns the specified payload number for the given file
 def fileParser(myFile, payloadNumber):
 	
 	#Defines how large the payload to send is
@@ -87,7 +88,7 @@ def fileParser(myFile, payloadNumber):
 	#Returns the payload portion
 	return myFile[(payloadNumber-1)*512 : ((payloadNumber*512)-1)]
 
-
+#Downloads the webpage here
 downloadedHTML = URLDownload(url)
 
 print(fileParser(downloadedHTML, 1))
