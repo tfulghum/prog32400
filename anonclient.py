@@ -110,11 +110,11 @@ def packetLog(sNum, aNum, A, S, F, File_object, logType):
 	
 	
 	if logType == 0:
-		File_object.write(f"RECV {sNum} {aNum} {ACK} {SEQ} {FIN}")
+		File_object.write(f"RECV {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
 	elif logType == 1:
-		File_object.write(f"SEND {sNum} {aNum} {ACK} {SEQ} {FIN}")
+		File_object.write(f"SEND {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
 	elif logType == 2:
-		File_object.write(f"RETRAN {sNum} {aNum} {ACK} {SEQ} {FIN}")
+		File_object.write(f"RETRAN {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
 
 
 #getting command line arguments
