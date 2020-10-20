@@ -202,7 +202,7 @@ while(go == 1):
 			
         doneSending = False
         F = 0
-        counter = 0
+        counter = 1
     except KeyboardInterrupt:
         print("Exiting now...")
         UDPServerSocket.close()

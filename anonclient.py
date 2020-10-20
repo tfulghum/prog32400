@@ -185,7 +185,6 @@ UDPClientSocket.sendto(myPacket, serverAddressPort)
 while(not F):
 	#Get response from the server
 	header = stopAndWait(UDPClientSocket, bufferSize, myPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
-	print(header)
 	payload = UDPClientSocket.recvfrom(512)
 
 	seqNumber, ackNumber, A, S, F = msgParser(header[0])
