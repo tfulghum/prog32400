@@ -97,6 +97,27 @@ def fileParser(myFile, payloadNumber):
 	#Returns the payload portion
 	return myFile[(payloadNumber-1)*512 : ((payloadNumber*512)-1)], finished
 
+def stopAndWait(mySocket, buffSiz, myHeader, myPayload, portNum, seqNumber, ackNumber, A, S, F, File_object):
+    servMsg = 0
+    mySocket.settimeout(0.5)
+    
+    #Can get rid of exponential backoff
+    while not servMsg:
+        servMsg = mySocket.recvfrom(buffSiz)
+        
+        if not servMsg:
+            #Resends the packet
+            UDPClientSocket.sendto(myHeader, serverAddressPort)
+            UDPClientSocket.sendto(myPayload, serverAddressPort)
+            
+            #Logs that a retransmit was made
+            logType = 2
+            packetLog(seqNumber, ackNumber, A, S, F, File_object, logType)
+            #I don't think we need this anymore
+            #servMsg = "Message from Server {}".format(msgFromServer[0])
+    return servMsg
+
+
 doneSending = False
 counter = 1
 
@@ -173,6 +194,9 @@ while(go == 1):
             print("Sent payload number: ", counter)
 			
             counter = counter + 1
+            
+            print("Listening")
+            stopAndWait(UDPServerSocket, 96, newHeader, currentPayload, localPort, newSeqNumber, newAckNumber, Ar, Sr, Fr, myFile)
 			
         go = 0
 
