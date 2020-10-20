@@ -100,7 +100,7 @@ def fileParser(myFile, payloadNumber):
 
 def stopAndWait(mySocket, buffSiz, myHeader, myPayload, portNum, seqNumber, ackNumber, A, S, F, File_object):
     servMsg = 0
-    mySocket.settimeout(10)
+    mySocket.settimeout(300)
     
     #Can get rid of exponential backoff
     while not servMsg:
@@ -201,6 +201,8 @@ while(go == 1):
             stopAndWait(UDPServerSocket, 96, newHeader, currentPayload, localPort, newSeqNumber, newAckNumber, Ar, Sr, Fr, File_object)
 			
         doneSending = False
+        F = 0
+        counter = 0
     except KeyboardInterrupt:
         print("Exiting now...")
         UDPServerSocket.close()
