@@ -199,4 +199,5 @@ while(not F):
 	myPacket = packThePacket(newSeqNumber, newAckNumber, A, S, F)
 	UDPClientSocket.sendto(myPacket, serverAddressPort)
 
+print("Payload transfer complete")
 UDPClientSocket.close()

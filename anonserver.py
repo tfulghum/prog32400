@@ -56,11 +56,11 @@ def packetLog(sNum, aNum, A, S, F, File_object, logType):
 	
 	
 	if logType == 0:
-		File_object.write(f"RECV {sNum} {aNum} {ACK} {SEQ} {FIN}")
+		File_object.write(f"RECV {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
 	elif logType == 1:
-		File_object.write(f"SEND {sNum} {aNum} {ACK} {SEQ} {FIN}")
+		File_object.write(f"SEND {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
 	elif logType == 2:
-		File_object.write(f"RETRAN {sNum} {aNum} {ACK} {SEQ} {FIN}")
+		File_object.write(f"RETRAN {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
 
 
 #getting command line arguments
@@ -119,7 +119,7 @@ def stopAndWait(mySocket, buffSiz, myHeader, myPayload, portNum, seqNumber, ackN
         time.sleep(.5)
     return servMsg
 
-File_object = open(logfile, "w")
+File_object = open(logfile, "a")
 doneSending = False
 counter = 1
 
@@ -135,12 +135,11 @@ UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
 UDPServerSocket.bind((localIP, localPort))
 
-print("UDP server up and listening")
-
 # Listen for incoming datagrams
 go = 1
 while(go == 1):
     try:
+        print("UDP server up and listening")
         #First packet headers
         recvInfo, addr = UDPServerSocket.recvfrom(96)
 
@@ -203,6 +202,9 @@ while(go == 1):
         doneSending = False
         F = 0
         counter = 1
+        print("Payload transfer complete")
+        #Close the file here
+        File_object.close()
     except KeyboardInterrupt:
         print("Exiting now...")
         UDPServerSocket.close()
