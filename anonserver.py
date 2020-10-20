@@ -78,10 +78,19 @@ def URLDownload(url):
 	with urllib.request.urlopen(url) as f:
 		html = f.read()
 	return html
+	
+def fileParser(myFile, payloadNumber):
+	
+	#Defines how large the payload to send is
+	payloadSize = 512
+	
+	#Returns the payload portion
+	return myFile[(payloadNumber-1)*512 : ((payloadNumber*512)-1)]
 
 
-#Downloads the file from the URL given
+downloadedHTML = URLDownload(url)
 
+print(fileParser(downloadedHTML, 1))
 
 localIP     = "localhost"
 #socket.gethostbyname(socket.gethostname())
