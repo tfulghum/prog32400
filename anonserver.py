@@ -97,6 +97,9 @@ def fileParser(myFile, payloadNumber):
 	#Returns the payload portion
 	return myFile[(payloadNumber-1)*512 : ((payloadNumber*512)-1)], finished
 
+doneSending = False
+counter = 1
+
 #Downloads the webpage here
 downloadedHTML = URLDownload(url)
 
@@ -159,8 +162,6 @@ while(go == 1):
 				
             newHeader = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
 			
-            counter = 1
-			
             currentPayload, doneSending = fileParser(downloadedHTML, counter)
 			
             newAckNumber = seqNumberR
@@ -168,6 +169,8 @@ while(go == 1):
 			
             UDPServerSocket.sendto(newHeader, addr)
             UDPServerSocket.sendto(currentPayload, addr)
+			
+			print("Sent payload number: ", counter)
 			
             counter = counter + 1
 			
