@@ -173,6 +173,8 @@ seqNumber, ackNumber, A, S, F = msgParser(msg[0])
 logtype = 1
 packetLog(seqNumber, ackNumber, A, S, F, File_object, logType)
 
+print("Handshake complete")
+
 #Create response packet
 myPacket = packThePacket(seqNumber, ackNumber, A, S, F)
 
