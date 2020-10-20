@@ -170,7 +170,7 @@ while(go == 1):
             UDPServerSocket.sendto(newHeader, addr)
             UDPServerSocket.sendto(currentPayload, addr)
 			
-			print("Sent payload number: ", counter)
+            print("Sent payload number: ", counter)
 			
             counter = counter + 1
 			
