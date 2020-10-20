@@ -1,4 +1,4 @@
-  
+import socket
 import socket
 import sys
 import struct
@@ -30,7 +30,7 @@ def stopAndWait(mySocket, buffSiz, myPacket, portNum, seqNumber, ackNumber, A, S
 			
 			#Logs that a retransmit was made
 			logType = 2
-			packetReceivedLog(seqNumber, ackNumber, A, S, F, File_object, logType)
+			packetLog(seqNumber, ackNumber, A, S, F, File_object, logType)
 			#I don't think we need this anymore
 			#servMsg = "Message from Server {}".format(msgFromServer[0])
 	return servMsg
@@ -86,13 +86,31 @@ def msgParserPayload(msg):
 	
 	return seqNumber, ackNumber, A, S, F, payload
 
-def packetReceivedLog(sNum, aNum, A, S, F, File_object, logType):
+def packetLog(sNum, aNum, A, S, F, File_object, logType):
+	
+	#Converts from binary to string for logging purposes
+	if A == 1:
+		ACK = "ACK"
+	else:
+		ACK = ""
+	
+	if A == 1:
+		SEQ = "SEQ"
+	else:
+		SEQ = ""
+	
+	if F == 1:
+		FIN = "FIN"
+	else:
+		FIN = ""
+	
+	
 	if logType == 0:
-		File_object.write(f"RECV {sNum} {aNum} ")
+		File_object.write(f"RECV {sNum} {aNum} {ACK} {SEQ} {FIN}")
 	elif logType == 1:
-		File_object.write(f"SEND {sNum} {aNum} ")
+		File_object.write(f"SEND {sNum} {aNum} {ACK} {SEQ} {FIN}")
 	elif logType == 2:
-		File_object.write(f"RETRAN {sNum} {aNum} ")
+		File_object.write(f"RETRAN {sNum} {aNum} {ACK} {SEQ} {FIN}")
 
 
 #getting command line arguments
@@ -145,7 +163,7 @@ UDPClientSocket.sendto(firstPacket, serverAddressPort)
 logType = 0
 
 #log to file
-packetReceivedLog(seqNumber, ackNumber, A, S, F, File_object, logType)
+packetLog(seqNumber, ackNumber, A, S, F, File_object, logType)
 
 #Response from the server
 msg = stopAndWait(UDPClientSocket, bufferSize, firstPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
@@ -153,6 +171,7 @@ print(msg)
 #Parse the response
 seqNumber, ackNumber, A, S, F = msgParser(msg[0])
 logtype = 1
+packetLog(seqNumber, ackNumber, A, S, F, File_object, logType)
 
 #Kept for debugging
 print(seqNumber, ackNumber, A, S, F)
@@ -173,8 +192,10 @@ while(not F):
 	#Send seq and ack depending on recieved values
 	if A:
 		newAckNumber = seqNumber+1
-	if S:
-		newSeqNumber = ackNumber+1
+
+	newAckNumber = seqNumber
+	newSeqNumber = ackNumber + 1
+
 	myPacket = struct.pack(newSeqNumber, newAckNumber, A, S, F)#what is packer?
 
 UDPClientSocket.close()

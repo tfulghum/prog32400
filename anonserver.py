@@ -34,7 +34,34 @@ def msgParser(msg):
     
     return seqNumber, ackNumber, A, S, F
 
- #getting command line arguments
+def packetLog(sNum, aNum, A, S, F, File_object, logType):
+	
+	#Converts from binary to string for logging purposes
+	if A == 1:
+		ACK = "ACK"
+	else:
+		ACK = ""
+	
+	if A == 1:
+		SEQ = "SEQ"
+	else:
+		SEQ = ""
+	
+	if F == 1:
+		FIN = "FIN"
+	else:
+		FIN = ""
+	
+	
+	if logType == 0:
+		File_object.write(f"RECV {sNum} {aNum} {ACK} {SEQ} {FIN}")
+	elif logType == 1:
+		File_object.write(f"SEND {sNum} {aNum} {ACK} {SEQ} {FIN}")
+	elif logType == 2:
+		File_object.write(f"RETRAN {sNum} {aNum} {ACK} {SEQ} {FIN}")
+
+
+#getting command line arguments
 for args in sys.argv:
     if args == '-p':
         localPort = int(sys.argv[sys.argv.index(args)+1])
@@ -42,21 +69,29 @@ for args in sys.argv:
         logfile = sys.argv[sys.argv.index(args)+1]
     if args == '-u':
         url = sys.argv[sys.argv.index(args)+1]
+		
+		
+def URLDownload(url):
+{
+	response = urllib.request.urlopen(url)
+	#webcontent = response.read() I don't think we need this line for this program
+	return response
+}
+
+#Downloads the file from the URL given
+payload = URLDownload(url)
+
 
 localIP     = "localhost"
 #socket.gethostbyname(socket.gethostname())
 
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
- 
-
 # Bind to address and ip
 
 UDPServerSocket.bind((localIP, localPort))
 
 print("UDP server up and listening")
-
- 
 
 # Listen for incoming datagrams
 go = 1
