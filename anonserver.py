@@ -91,8 +91,6 @@ def fileParser(myFile, payloadNumber):
 #Downloads the webpage here
 downloadedHTML = URLDownload(url)
 
-print(fileParser(downloadedHTML, 1))
-
 localIP     = "localhost"
 #socket.gethostbyname(socket.gethostname())
 
