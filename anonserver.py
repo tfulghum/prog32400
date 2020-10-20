@@ -156,15 +156,15 @@ while(go == 1):
 			#Needs to swap and send header first
 			if A:
 				newAckNumber = seqNumber+1
-
-			newAckNumber = seqNumber
-			newSeqNumber = ackNumber+1
-			
+				
 			newHeader = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
 			
 			counter = 1
 			
 			currentPayload, doneSending = fileParser(downloadedHTML, counter)
+			
+			newAckNumber = seqNumber
+			newSeqNumber = seqNumber+len(currentPayload)
 			
 			UDPServerSocket.sendto(newHeader, addr)
 			UDPServerSocket.sendto(currentPayload, addr)
