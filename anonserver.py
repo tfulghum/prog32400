@@ -85,8 +85,17 @@ def fileParser(myFile, payloadNumber):
 	#Defines how large the payload to send is
 	payloadSize = 512
 	
+	if len(myFile) < (512*payloadNumber)-1:
+		finished = True
+		
+		theDifference = (payloadNumber*512) - len(myFile)
+		
+		return myFile[(payloadNumber-1)*512 : len(myFile)]+bytes("0"*theDifference, 'utf-8'), finished
+	else:
+		finished = False
+	
 	#Returns the payload portion
-	return myFile[(payloadNumber-1)*512 : ((payloadNumber*512)-1)]
+	return myFile[(payloadNumber-1)*512 : ((payloadNumber*512)-1)], finished
 
 #Downloads the webpage here
 downloadedHTML = URLDownload(url)
@@ -141,7 +150,27 @@ while(go == 1):
 
         print(seqNumberR, ackNumberR, Ar, Sr, Fr)
         print("Handshake Complete")
+		
+		while(doneSending == False):
+			
+			#Needs to swap and send header first
+			if A:
+				newAckNumber = seqNumber+1
 
+			newAckNumber = seqNumber
+			newSeqNumber = ackNumber+1
+			
+			newHeader = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
+			
+			counter = 1
+			
+			currentPayload, doneSending = fileParser(downloadedHTML, counter)
+			
+			UDPServerSocket.sendto(newHeader, addr)
+			UDPServerSocket.sendto(currentPayload, addr)
+			
+			counter = counter + 1
+			
         go = 0
 
     except KeyboardInterrupt:
