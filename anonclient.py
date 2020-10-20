@@ -4,26 +4,28 @@ import sys
 import struct
 import random
 import logging
+import time
 
 #functions
  
 def packThePacket(sNum, aNum, A, S, F):
 	#This struct needs some work but will otherwise function
 	packer = struct.Struct('>iii')
-	print(A*2*2 + S*2 + F, hex(sNum), hex(aNum))
 	lastLine = A*2*2 + S*2 + F
 	packet = packer.pack(sNum, aNum, lastLine)
-	print(packet)
 	return packet
 
 def stopAndWait(mySocket, buffSiz, myPacket, portNum, seqNumber, ackNumber, A, S, F, File_object):
 	servMsg = 0
-	mySocket.settimeout(0.5)
+	mySocket.settimeout(1)
 	
 	#Can get rid of exponential backoff
 	while not servMsg:
-		servMsg = mySocket.recvfrom(buffSiz)
-		
+		try:
+			servMsg = mySocket.recvfrom(buffSiz)
+		except ConnectionResetError:
+			print("Not a port number of the valid server")
+			exit(0)
 		if not servMsg:
 			#Resends the packet
 			UDPClientSocket.sendto(firstPacket, serverAddressPort)
@@ -31,8 +33,10 @@ def stopAndWait(mySocket, buffSiz, myPacket, portNum, seqNumber, ackNumber, A, S
 			#Logs that a retransmit was made
 			logType = 2
 			packetLog(seqNumber, ackNumber, A, S, F, File_object, logType)
+			print("Seq: ", seqNumber, "Ack: ", ackNumber)
 			#I don't think we need this anymore
 			#servMsg = "Message from Server {}".format(msgFromServer[0])
+		time.sleep(.5)
 	return servMsg
 
 def msgParser(msg):
@@ -132,9 +136,6 @@ serverAddressPort   = (server, port)
 
 bufferSize          = 96
 
-#Maximum amount of time to wait for stop and wait protocol
-maxWait = 500
-
 #Number of failed attempts to send/recieve data from server
 numFails = 0
 
@@ -167,14 +168,10 @@ packetLog(seqNumber, ackNumber, A, S, F, File_object, logType)
 
 #Response from the server
 msg = stopAndWait(UDPClientSocket, bufferSize, firstPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
-print(msg)
 #Parse the response
 seqNumber, ackNumber, A, S, F = msgParser(msg[0])
 logtype = 1
 packetLog(seqNumber, ackNumber, A, S, F, File_object, logType)
-
-#Kept for debugging
-print(seqNumber, ackNumber, A, S, F)
 
 #Create response packet
 myPacket = packThePacket(seqNumber, ackNumber, A, S, F)
@@ -186,9 +183,9 @@ UDPClientSocket.sendto(myPacket, serverAddressPort)
 while(not F):
 	#Get response from the server
 	header = stopAndWait(UDPClientSocket, bufferSize, myPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
-	payload = stopAndWait(UDPClientSocket, 512, myPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
-	seqNumber, ackNumber, A, S, F = msgParserPayload(header)
-	print(seqNumber, ackNumber, A, S, F)
+	payload = UDPClientSocket.recvfrom(512)
+
+	seqNumber, ackNumber, A, S, F = msgParser(header[0])
 	
 	#Send seq and ack depending on recieved values
 	if A:
@@ -197,7 +194,7 @@ while(not F):
 	newAckNumber = seqNumber
 	newSeqNumber = ackNumber + 1
 
-	myPacket = struct.pack(newSeqNumber, newAckNumber, A, S, F)#what is packer?
+	myPacket = packThePacket(newSeqNumber, newAckNumber, A, S, F)
 	UDPClientSocket.sendto(myPacket, serverAddressPort)
 
 UDPClientSocket.close()

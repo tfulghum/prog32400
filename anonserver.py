@@ -100,7 +100,7 @@ def fileParser(myFile, payloadNumber):
 
 def stopAndWait(mySocket, buffSiz, myHeader, myPayload, portNum, seqNumber, ackNumber, A, S, F, File_object):
     servMsg = 0
-    mySocket.settimeout(100)
+    mySocket.settimeout(10)
     
     #Can get rid of exponential backoff
     while not servMsg:
@@ -145,8 +145,6 @@ while(go == 1):
         recvInfo, addr = UDPServerSocket.recvfrom(96)
 
         seqNumberR, ackNumberR, Ar, Sr, Fr = msgParser(recvInfo)
-
-        print("Got ", seqNumberR, ackNumberR, Ar, Sr, Fr)
         packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 0)
 
         tempVar = ackNumberR
@@ -156,8 +154,6 @@ while(go == 1):
 
         if(Ar == 0):
             Ar = 1
-
-        print("Sending ", seqNumberR, ackNumberR, Ar, Sr, Fr)
         packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 1)
 
         handshakePack = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
@@ -168,7 +164,6 @@ while(go == 1):
         recvInfo, addr = UDPServerSocket.recvfrom(96)
         seqNumberR, ackNumberR, Ar, Sr, Fr = msgParser(recvInfo)
 
-        print("Got ", seqNumberR, ackNumberR, Ar, Sr, Fr)
         packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, File_object, 0)
         
         Sr = 0
@@ -177,7 +172,6 @@ while(go == 1):
         ackNumberR = seqNumberR + 1
         seqNumberR = tempVar
 
-        print(seqNumberR, ackNumberR, Ar, Sr, Fr)
         print("Handshake Complete")
 		
         while(doneSending == False):
@@ -185,11 +179,13 @@ while(go == 1):
 			#Needs to swap and send header first
             if Ar:
                 newAckNumber = seqNumberR+1
-				
-            newHeader = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
 			
             currentPayload, doneSending = fileParser(downloadedHTML, counter)
 			
+            if doneSending == 1:
+                    Fr = 1
+            newHeader = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
+
             newAckNumber = seqNumberR
             newSeqNumber = seqNumberR+len(currentPayload)
 			
@@ -202,11 +198,9 @@ while(go == 1):
 			
             counter = counter + 1
             
-            print("Listening")
             stopAndWait(UDPServerSocket, 96, newHeader, currentPayload, localPort, newSeqNumber, newAckNumber, Ar, Sr, Fr, File_object)
 			
-        go = 0
-
+        doneSending = False
     except KeyboardInterrupt:
         print("Exiting now...")
         UDPServerSocket.close()
