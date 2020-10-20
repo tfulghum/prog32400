@@ -151,25 +151,25 @@ while(go == 1):
         print(seqNumberR, ackNumberR, Ar, Sr, Fr)
         print("Handshake Complete")
 		
-		while(doneSending == False):
+        while(doneSending == False):
 			
 			#Needs to swap and send header first
-			if A:
-				newAckNumber = seqNumber+1
+            if Ar:
+                newAckNumber = seqNumberR+1
 				
-			newHeader = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
+            newHeader = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
 			
-			counter = 1
+            counter = 1
 			
-			currentPayload, doneSending = fileParser(downloadedHTML, counter)
+            currentPayload, doneSending = fileParser(downloadedHTML, counter)
 			
-			newAckNumber = seqNumber
-			newSeqNumber = seqNumber+len(currentPayload)
+            newAckNumber = seqNumberR
+            newSeqNumber = seqNumberR+len(currentPayload)
 			
-			UDPServerSocket.sendto(newHeader, addr)
-			UDPServerSocket.sendto(currentPayload, addr)
+            UDPServerSocket.sendto(newHeader, addr)
+            UDPServerSocket.sendto(currentPayload, addr)
 			
-			counter = counter + 1
+            counter = counter + 1
 			
         go = 0
 
