@@ -76,11 +76,13 @@ for args in sys.argv:
 		
 #Gets the content of given url	
 def URLDownload(url):
-	
-	url = 'http://' + url
-	with urllib.request.urlopen(url) as f:
-		html = f.read()
-	return html
+    url = 'http://' + url
+    with urllib.request.urlopen(url) as f:
+        html = f.read()
+        h = open('url.html', 'wb')
+        h.write(html)
+        h.close()
+    return html
 	
 #Returns the specified payload number for the given file
 def fileParser(myFile, payloadNumber):
@@ -137,8 +139,7 @@ counter = 1
 #Downloads the webpage here
 downloadedHTML = URLDownload(url)
 
-localIP     = "localhost"
-#socket.gethostbyname(socket.gethostname())
+localIP = socket.gethostbyname(socket.gethostname())
 
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
@@ -159,8 +160,7 @@ while(go == 1):
 
         seqNumberR, ackNumberR = numberUpdater(seqNumberR, ackNumberR)
 
-        if(Ar == 0):
-            Ar = 1
+        Ar = 1
         packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, 1)
 
         handshakePack = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
@@ -183,29 +183,24 @@ while(go == 1):
 		
         while(doneSending == False):
 			
-			#Needs to swap and send header first
-            if Ar:
-                newAckNumber = seqNumberR+1
-			
             currentPayload, doneSending = fileParser(downloadedHTML, counter)
 			
             if doneSending == 1:
-                    Fr = 1
-            newHeader = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
-
+                Fr = 1
+            
             seqNumberR, ackNumberR = numberUpdater(seqNumberR, ackNumberR)
+            newHeader = packThePacket(seqNumberR, ackNumberR, Ar, Sr, Fr)
 			
             UDPServerSocket.sendto(newHeader, addr)
-            packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, 0)
-            UDPServerSocket.sendto(currentPayload, addr)
             packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, 1)
+            UDPServerSocket.sendto(currentPayload, addr)
 			
             print("Sent payload number: ", counter)
 			
             counter = counter + 1
-            
-            stopAndWait(UDPServerSocket, 96, newHeader, currentPayload, localPort, seqNumberR, ackNumberR, Ar, Sr, Fr)
-			
+            header = stopAndWait(UDPServerSocket, 96, newHeader, currentPayload, localPort, seqNumberR, ackNumberR, Ar, Sr, Fr)
+            seqNumberR, ackNumberR, Ar, Sr, Fr = msgParser(header[0])
+
         doneSending = False
         F = 0
         counter = 1

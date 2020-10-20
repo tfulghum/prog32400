@@ -117,15 +117,10 @@ def packetLog(sNum, aNum, A, S, F, File_object, logType):
 		File_object.write(f"RETRAN {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
 
 def numberUpdater(seqNumber, ackNumber):
-	
-	if seqNumber == None:
-		newSeqNumber = 1
-	else:
-		newSeqNumber = ackNumber
-	if ackNumber == None:
-		newAckNumber = 100
-	else:
-		newAckNumber = seqNumber + 512
+	newAckNumber = seqNumber + 512
+
+	newSeqNumber = ackNumber
+	return newSeqNumber, newAckNumber
 
 #getting command line arguments
 for args in sys.argv:
@@ -201,11 +196,11 @@ while(not F):
 	packetLog(seqNumber, ackNumber, A, S, F, File_object, 0)
 	#Send seq and ack depending on recieved values
 	
-	print(seqNumber, ackNumber)
-	newSeqNumber, newAckNumber = numberUpdater(seqNumber, ackNumber)
-	packetLog(newSeqNumber, newAckNumber, A, S, F, File_object, 1)
+	seqNumber, ackNumber = numberUpdater(seqNumber, ackNumber)
+	packetLog(seqNumber, ackNumber, A, S, F, File_object, 1)
+	print("Seq number: ", seqNumber,"\n", "Ack number: ", ackNumber)
 
-	myPacket = packThePacket(newSeqNumber, newAckNumber, A, S, F)
+	myPacket = packThePacket(seqNumber, ackNumber, A, S, F)
 	UDPClientSocket.sendto(myPacket, serverAddressPort)
 
 print("Payload transfer complete")
