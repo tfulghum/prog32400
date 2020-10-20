@@ -1,6 +1,7 @@
 import socket
 import struct
 import sys
+import urllib.request, urllib.error, urllib.parse
 
 def packThePacket(sNum, aNum, A, S, F):
     #This struct needs some work but will otherwise function
@@ -72,14 +73,14 @@ for args in sys.argv:
 		
 		
 def URLDownload(url):
-{
-	response = urllib.request.urlopen(url)
+
+	response = requests.get(url, stream = True)
 	#webcontent = response.read() I don't think we need this line for this program
 	return response
-}
+
 
 #Downloads the file from the URL given
-payload = URLDownload(url)
+print(URLDownload(url))
 
 
 localIP     = "localhost"
