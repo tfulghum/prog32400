@@ -40,6 +40,11 @@ def stopAndWait(mySocket, buffSiz, myPacket, portNum, seqNumber, ackNumber, A, S
 	return servMsg
 
 def msgParser(msg):
+
+	if len(msg) > 12:
+		print("Packet lost, goodbye")
+		exit()
+
 	packer = '>iii'
 	unpackedMsg = struct.unpack('>iii', msg)
 	seqNumber = unpackedMsg[0]

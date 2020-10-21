@@ -112,8 +112,8 @@ def stopAndWait(mySocket, buffSiz, myHeader, myPayload, portNum, seqNumber, ackN
         
         if not servMsg:
             #Resends the packet
-            UDPClientSocket.sendto(myHeader, serverAddressPort)
-            UDPClientSocket.sendto(myPayload, serverAddressPort)
+            mySocket.sendto(myHeader, portNum)
+            mySocket.sendto(myPayload, portNum)
             
             #Logs that a retransmit was made
             logType = 2
@@ -139,6 +139,7 @@ counter = 1
 #Downloads the webpage here
 downloadedHTML = URLDownload(url)
 
+#localIP = 'localhost'
 localIP = socket.gethostbyname(socket.gethostname())
 
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
