@@ -63,16 +63,6 @@ def packetLog(sNum, aNum, A, S, F, logType):
 		logging.info(f"SEND {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
 	elif logType == 2:
 		logging.info(f"RETRAN {sNum} {aNum} {ACK} {SEQ} {FIN}\n")
-
-
-#getting command line arguments
-for args in sys.argv:
-    if args == '-p':
-        localPort = int(sys.argv[sys.argv.index(args)+1])
-    if args == '-l':
-        logfile = sys.argv[sys.argv.index(args)+1]
-    if args == '-u':
-        url = sys.argv[sys.argv.index(args)+1]
 		
 #Gets the content of given url	
 def URLDownload(url):
@@ -112,8 +102,8 @@ def stopAndWait(mySocket, buffSiz, myHeader, myPayload, portNum, seqNumber, ackN
         
         if not servMsg:
             #Resends the packet
-            UDPClientSocket.sendto(myHeader, serverAddressPort)
-            UDPClientSocket.sendto(myPayload, serverAddressPort)
+            mySocket.sendto(myHeader, portNum)
+            mySocket.sendto(myPayload, portNum)
             
             #Logs that a retransmit was made
             logType = 2
@@ -132,6 +122,15 @@ def numberUpdater(seqNumber, ackNumber):
         newSeqNumber = ackNumber
     return newSeqNumber, newAckNumber
 
+#getting command line arguments
+for args in sys.argv:
+    if args == '-p':
+        localPort = int(sys.argv[sys.argv.index(args)+1])
+    if args == '-l':
+        logfile = sys.argv[sys.argv.index(args)+1]
+    if args == '-u':
+        url = sys.argv[sys.argv.index(args)+1]
+
 logging.basicConfig(filename=(os.getcwd() + '/' + logfile), level=logging.INFO)
 doneSending = False
 counter = 1
@@ -139,8 +138,8 @@ counter = 1
 #Downloads the webpage here
 downloadedHTML = URLDownload(url)
 
-#localIP = socket.gethostbyname(socket.gethostname())
-localIP = 'localhost'
+localIP = socket.gethostbyname(socket.gethostname())
+#localIP = 'localhost'
 
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
@@ -154,7 +153,7 @@ while(go == 1):
     try:
         print("UDP server up and listening")
         #First packet headers
-        recvInfo, addr = UDPServerSocket.recvfrom(96)
+        recvInfo, addr = UDPServerSocket.recvfrom(12)
 
         seqNumberR, ackNumberR, Ar, Sr, Fr = msgParser(recvInfo)
         packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, 0)
@@ -169,7 +168,7 @@ while(go == 1):
         UDPServerSocket.sendto(handshakePack, addr)
 
         #Complete handshake
-        recvInfo, addr = UDPServerSocket.recvfrom(96)
+        recvInfo, addr = UDPServerSocket.recvfrom(12)
         seqNumberR, ackNumberR, Ar, Sr, Fr = msgParser(recvInfo)
 
         packetLog(seqNumberR, ackNumberR, Ar, Sr, Fr, 0)
@@ -199,7 +198,7 @@ while(go == 1):
             print("Sent payload number: ", counter)
 			
             counter = counter + 1
-            header = stopAndWait(UDPServerSocket, 96, newHeader, currentPayload, localPort, seqNumberR, ackNumberR, Ar, Sr, Fr)
+            header = stopAndWait(UDPServerSocket, 12, newHeader, currentPayload, localPort, seqNumberR, ackNumberR, Ar, Sr, Fr)
             seqNumberR, ackNumberR, Ar, Sr, Fr = msgParser(header[0])
 
         doneSending = False

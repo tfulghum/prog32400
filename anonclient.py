@@ -139,7 +139,7 @@ bytesToSend         = str.encode(msgFromClient)
 
 serverAddressPort   = (server, port)
 
-bufferSize          = 96
+bufferSize          = 12
 
 #Number of failed attempts to send/recieve data from server
 numFails = 0
@@ -199,6 +199,8 @@ while(not F):
 	seqNumber, ackNumber = numberUpdater(seqNumber, ackNumber)
 	packetLog(seqNumber, ackNumber, A, S, F, File_object, 1)
 	print("Seq number: ", seqNumber,"\n", "Ack number: ", ackNumber)
+	print("Header[0]: ", header[0])
+	print("Header size: ", len(header[0]))
 
 	myPacket = packThePacket(seqNumber, ackNumber, A, S, F)
 	UDPClientSocket.sendto(myPacket, serverAddressPort)
