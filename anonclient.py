@@ -64,32 +64,6 @@ def msgParser(msg):
 	
 	return seqNumber, ackNumber, A, S, F
 	
-def msgParserPayload(msg):
-	packer = struct.Struct('>iii512i')
-	unpackedMsg = packer.unpack(msg)
-	seqNumber = unpackedMsg[0]
-	ackNumber = unpackedMsg[1]
-	flags = unpackedMsg[2]
-	payload = unpackedMsg[3]
-	
-	#Determines which flags are set based on the value of the flags variable
-	if flags >= 4:
-		A = 1
-		flags = flags - 4
-	else:
-		A = 0
-	if flags >= 2:
-		S = 1
-		flags = flags - 2
-	else:
-		S = 0
-	if flags >= 1:
-		F = 1
-	else:
-		F = 0
-	
-	return seqNumber, ackNumber, A, S, F, payload
-
 def packetLog(sNum, aNum, A, S, F, File_object, logType):
 	
 	#Converts from binary to string for logging purposes
@@ -189,11 +163,15 @@ UDPClientSocket.sendto(myPacket, serverAddressPort)
 #Payload loop
 while(not F):
 	#Get response from the server
-	header = stopAndWait(UDPClientSocket, bufferSize, myPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
+	seqNumber = 1000000
+	while seqNumber > 999999:
+		header = stopAndWait(UDPClientSocket, bufferSize, myPacket, serverAddressPort, seqNumber, ackNumber, A, S, F, File_object)
+		seqNumber, ackNumber, A, S, F = msgParser(header[0])
 	payload = UDPClientSocket.recvfrom(512)
 
-	seqNumber, ackNumber, A, S, F = msgParser(header[0])
 	packetLog(seqNumber, ackNumber, A, S, F, File_object, 0)
+
+
 	#Send seq and ack depending on recieved values
 	
 	seqNumber, ackNumber = numberUpdater(seqNumber, ackNumber)
