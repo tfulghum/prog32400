@@ -139,7 +139,8 @@ counter = 1
 #Downloads the webpage here
 downloadedHTML = URLDownload(url)
 
-localIP = socket.gethostbyname(socket.gethostname())
+#localIP = socket.gethostbyname(socket.gethostname())
+localIP = 'localhost'
 
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
