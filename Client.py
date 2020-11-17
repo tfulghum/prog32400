@@ -5,8 +5,6 @@ import struct
 import logging
 import os
 
-#MTU is 1500 bytes
-
 randNum = 12345
 finalACKNum = 54321
 headerSize = 12

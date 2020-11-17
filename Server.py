@@ -5,9 +5,6 @@ import struct
 import logging
 import os
 
-#Program 1 CSC 4200
-#Author: Tyler Fulghum
-
 headerSize = 12
 randomNum = 12345
 counter = 1
