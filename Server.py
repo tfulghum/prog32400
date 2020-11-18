@@ -4,6 +4,7 @@ import getopt
 import struct
 import logging
 import os
+import urllib
 
 headerSize = 12
 randomNum = 12345
@@ -28,8 +29,6 @@ def URLDownload(url):
     return html
 
 def fileParser(myFile, payloadNumber):
-	
-	
 	if len(myFile) < (MTU*payloadNumber)-1:
 		finished = True
 		
@@ -42,11 +41,11 @@ def fileParser(myFile, payloadNumber):
 	#Returns the payload portion
 	return myFile[(payloadNumber-1)*MTU : ((payloadNumber*MTU)-1)], finished
 
-
 def main(argv):
 	#STEP 1 - create the socket object. This example uses TCP over IPv4
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	port = ''
+	url = ''
 	log = ''
 	#Get CL arguments
 	try:
@@ -57,6 +56,8 @@ def main(argv):
 	for opt, arg in opts:
 		if opt == ("-p"):
 			port = arg
+		if opt == ("-u"):
+			url = arg
 		if opt == ("-l"):
 			logging.basicConfig(filename=(os.getcwd() + '/' + arg), level=logging.INFO)
 
@@ -73,6 +74,10 @@ def main(argv):
 	#STEP 3 - do the actual listening
 	sock.listen(1)
 	goFlag = 1
+
+	#call URLDownload
+	downloadedHTML = URLDownload(url)
+
 	#Loop lets us get multiple packets
 	while goFlag == 1:
 		try:
@@ -86,8 +91,15 @@ def main(argv):
 
 			if(recievedNum != randomNum):
 				#Log that the response was not correct and figure out what to do
+				logs = ("Incorrect response")
+				logging.info(logs)
+				print(logs)
+
+			doneSending = False
 			while(doneSending != True):
 				#Creates payload and header and sends it
+				#maddison - what is counter used for
+				counter = 0
 				currentPayload, doneSending = fileParser(downloadedHTML, counter)
 				serverHead = struct.Struct('>ii')
 				header = serverHead.pack(randomNum, packetSize)
@@ -98,7 +110,13 @@ def main(argv):
 				recievedNum = struct.unpack('>i', ack)
 				if(recievedNum != randomNum):
 					#Log that the response was not correct and figure out what to do
-			counter = 1
+					logs = ("Incorrect reponse")
+					logging.info(logs)
+					print(logs)
+				counter += 1
+
+				#maddison - somewhere need to set doneSending to True
+
 			sock.close()
 
 
