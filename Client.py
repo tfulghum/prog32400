@@ -48,24 +48,17 @@ def main(argv):
 	print("Yay! connected to...", balancer_address)
 
 	#Creates a standard header and sends to the load balancer
-
-	#maddison - the num of bytes for what's being packed, received, and unpacked confuses me
-
 	packHeader = struct.Struct('>i')
+	packResponse = struct.Struct('>ii')
 	header = packHeader.pack(randNum)
 	sock.sendall(header)
 
 	s_head = sock.recv(headerSize)
-	recievedNum, payloadSize = struct.unpack('>ii', s_head)
+	recievedNum, payloadSize = packResponse.unpack('>ii', s_head)
 
 	#Detects if the recieved number is the same as what it should be
 	if(recievedNum != randNum):
 		#Log that the response was not correct and figure out what to do
-		logs = ("Response was incorrect")
-		logging.info(logs)
-		print(logs)
-		#if this is the case, we wouldn't be able to continue, right? We would have to loop back to the beginning and try again?
-
 	recievedIp = sock.recv(payloadSize).decode()
 
 	#Closes the connection with the load balancer after the IP is recieved
@@ -74,21 +67,16 @@ def main(argv):
 	#Opens a connection with the recieved replica server and requests data
 	sock.connect(recievedIp)
 	sock.sendall(header)
-	stillReceiving = True
 
-	while stillReceiving == True:
+	while stillRecieving == True:
 		s_head = sock.recv(headerSize)
-		receivedNum, payloadSize = struct.unpack('>ii', s_head)
-		receivedData = sock.recv(payloadSize).decode()
-
+		recievedNum, payloadSize = struct.unpack('>ii', s_head)
+		recievedData = sock.recv(payloadSize).decode()
 		#Write to a file
-		logs = (f"Payload: {receivedData}")
-		logging.info(logs)
-		print(logs)
 
 		#Detects the last packet
 		if(payloadSize != MTU):
-			stillReceiving = False;
+			stillRecieving = False;
 			#Send final ACK
 			finalACK = packHeader.pack(finalACKNum)
 			sock.sendall(finalACK)

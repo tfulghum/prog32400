@@ -9,6 +9,7 @@ import urllib
 headerSize = 12
 randomNum = 12345
 counter = 1
+pingNum = 54321
 
 #This is the size of the server payloads minus the header size
 #4 is the size of a bye and we recieve 2 of them
@@ -89,21 +90,37 @@ def main(argv):
 			dataRequest = connection_object.recv(headerSize)
 			recievedNum = struct.unpack('>i', dataRequest)
 
-			if(recievedNum != randomNum):
+			if(recievedNum != randomNum and recievedNum != pingNum):
 				#Log that the response was not correct and figure out what to do
 				logs = ("Incorrect response")
 				logging.info(logs)
 				print(logs)
+			
+			#Does logic for pinging request
+			if(recievedNum == pingNum):
+				header = serverHead.pack(randomNum, 0)
+				connection_object.send(header)
+				ack = connection_object.recv(headerSize)
+				recievedNum = struct.unpack('>i', ack)
+				if(recievedNum != pingNum):
+					#Log that the response was not correct and figure out what to do
+					logs = ("Incorrect reponse")
+					logging.info(logs)
+					print(logs)
+				else:
+					connection_object.close()
 
-			doneSending = False
-			while(doneSending != True):
+			while(doneSending != True and recievedNum == randomNum):
 				#Creates payload and header and sends it
-				#maddison - what is counter used for
+
 				counter = 0
 				currentPayload, doneSending = fileParser(downloadedHTML, counter)
 				serverHead = struct.Struct('>ii')
 				header = serverHead.pack(randomNum, packetSize)
 				connection_object.send(header)
+
+				#Sends HTML 
+				connection_object.send(currentPayload)
 
 				#Recieves data from the client
 				ack = connection_object.recv(headerSize)
@@ -114,8 +131,6 @@ def main(argv):
 					logging.info(logs)
 					print(logs)
 				counter += 1
-
-				#maddison - somewhere need to set doneSending to True
 
 			sock.close()
 
