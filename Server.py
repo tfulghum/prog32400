@@ -83,8 +83,8 @@ def main(argv):
 	while goFlag == 1:
 		try:
 			connection_object, client_address = sock.accept()
-			logs = ("Receivced connection from", client_address[0], client_address[1])
-			print("Receivced connection from", client_address)
+			logs = ("Received connection from", client_address[0], client_address[1])
+			print("Received connection from", client_address)
 			logging.info(logs)
 
 			dataRequest = connection_object.recv(headerSize)
