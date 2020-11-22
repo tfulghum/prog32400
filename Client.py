@@ -6,7 +6,7 @@ import logging
 import os
 
 randNum = 12345
-finalACKNum = 54321
+finalACKNum = 12345
 headerSize = 12
 
 #This is the size of the server payloads minus the header size
@@ -22,7 +22,7 @@ def main(argv):
 	cLog = ''
 	#STEP 2 - connect!
 	try:
-		opts, args = getopt.getopt(argv,"p:a:l:", ["PORT=", "ADDRESS=", "LOG="])
+		opts, args = getopt.getopt(argv,"p:s:l:", ["PORT=", "ADDRESS=", "LOG="])
 	except getopt.GetoptError:
 		print("Please enter an ip address and a port number")
 		sys.exit(2)
@@ -41,7 +41,7 @@ def main(argv):
 		print("Please use a valid integer for port value.")
 		sys.exit(2)
 
-	balancer_address = (cAddr, cPort)
+	balancer_address = ('localhost', cPort)
 	print("Connecting to...", balancer_address)
 	sock.connect(balancer_address)
 
@@ -54,24 +54,33 @@ def main(argv):
 	sock.sendall(header)
 
 	s_head = sock.recv(headerSize)
-	recievedNum, payloadSize = packResponse.unpack('>ii', s_head)
+	print(sys.getsizeof(s_head))
+	recievedNum, payloadSize = struct.unpack('>ii', s_head)
 
 	#Detects if the recieved number is the same as what it should be
 	if(recievedNum != randNum):
+		print("No bueno")
 		#Log that the response was not correct and figure out what to do
 	recievedIp = sock.recv(payloadSize).decode()
+	header = packHeader.pack(randNum)
+	sock.sendall(header)
+
 
 	#Closes the connection with the load balancer after the IP is recieved
 	sock.close()
-
+	#serverAddress = (recievedIp, cPort)
+	serverAddress = ('localhost', 5555)
 	#Opens a connection with the recieved replica server and requests data
-	sock.connect(recievedIp)
-	sock.sendall(header)
+	newSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+	newSock.connect(serverAddress)
+	newSock.sendall(header)
+	stillRecieving = True
+	counter = 0
 	while stillRecieving == True:
-		s_head = sock.recv(headerSize)
+		s_head = newSock.recv(headerSize)
 		recievedNum, payloadSize = struct.unpack('>ii', s_head)
-		recievedData = sock.recv(payloadSize).decode()
+		recievedData = newSock.recv(payloadSize).decode()
 		#Write to a file
 
 		#Detects the last packet
@@ -79,7 +88,15 @@ def main(argv):
 			stillRecieving = False;
 			#Send final ACK
 			finalACK = packHeader.pack(finalACKNum)
-			sock.sendall(finalACK)
+			newSock.sendall(finalACK)
+			print("End detected")
 		else:
-			sock.sendall(header)
-	sock.close()
+			print(header)
+			newSock.sendall(header)
+		counter += 1
+		print(counter)
+	
+	sleep(2)
+	newSock.close()
+if __name__ == "__main__":
+   main(sys.argv[1:])

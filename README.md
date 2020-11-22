@@ -5,6 +5,7 @@ Use Ctrl-C to exit cleanly.
 
 python3 server.py -p PORT -l LOGFILE -u URL
 python3 client.py -s SERVER-IP -p PORT -l LOGFILE
+python3 loadBalancer.py -s IPADDRESSFILE -p PORT -l LOGFILE
 
 The URL cannot include http in the program. Example:
 python3 server.py -p 10005 -l test.txt -u google.com

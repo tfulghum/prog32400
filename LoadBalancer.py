@@ -11,6 +11,9 @@ randomNum = 12345
 pingNum = 54321
 totalSent = 0
 
+#Period of time (in seconds) for table refresh
+refreshTime = 5
+
 packHeader = struct.Struct('>i')
 packResponse = struct.Struct('>ii')
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -18,14 +21,15 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 def pingIt(serverIPs):
 	pingPacket = packHeader.pack(pingNum)
-	for i in serverIPs
+	preferences = []
+	for i in serverIPs:
 		sock.connect(serverIPs(i))
 		#Start timer here
 		socket.sendall(pingPacket)
 		
 		#Times the packet send to receive time
 		start = timer()
-		totalSent++
+		totalSent = totalSent + 1
 		
 		#Waits for a response
 		recievedData = sock.recv(headerSize)
@@ -34,9 +38,9 @@ def pingIt(serverIPs):
 		#Parses incorrect reveived number
 		while(recievedNum != randomNum):
 			#Resends when received packet failed
-			numErrors++
+			numErrors = numErrors + 1
 			socket.sendall(pingPacket)
-			totalSent++
+			totalSent = totalSent + 1
 			recievedData = sock.recv(headerSize)
 			recievedNum = struct.unpack('>ii', recievedData)
 		
@@ -45,10 +49,11 @@ def pingIt(serverIPs):
 		elapsedTime = end-start
 		#Calculate here
 		calculatedVal = .25*elapsedTime + .75*(numErrors/totalSent)
-		preferences(i) = calculatedVal
+		preferences[i] = calculatedVal
 		numErrors = 0
 		totalSent = 0
-	return max(preferences)
+	#return max(preferences)
+	return 1
 
 def main(argv):
 	port = ''
@@ -57,7 +62,7 @@ def main(argv):
 	
 	#Get CL arguments
 	try:
-		opts, args = getopt.getopt(argv,"hp:l:", ["PORT=","LOG="])
+		opts, args = getopt.getopt(argv,"p:s:l:", ["PORT=","LOG="])
 	except getopt.GetoptError:
 		print("Please enter an ip address and a port number")
 		sys.exit(2)
@@ -70,20 +75,44 @@ def main(argv):
 			logging.basicConfig(filename=(os.getcwd() + '/' + arg), level=logging.INFO)
 
 	#Parses the server IP file
-	myFile = open(ipAddresses, "r")
+	IPs = []
+	myFile = open(ipAddresses, 'r')
 	lines = myFile.readlines()
-	for i in lines:
-		IPs[i] = line.strip()
 	
+	count = 0
+	while True:
+		line = myFile.readline()
+		if not line:
+			break
+		IPs[count] = line.strip()
+		count += 1
+	
+	try:
+		port = int(port)
+	except ValueError:
+		print("Please use a valid integer for port value.")
+		sys.exit(2)
 	#Calculates the best IP for client use
-	ipAddress = pingIt(IPs)
+	#ipAddress = pingIt(IPs)
 
 	#Starts the load balancer listener
+	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	server_address_object = ('localhost', port)
 	sock.bind(server_address_object)
-
+	ipAddress = '192.168.1.1'
+	loopNum = 0
+	#Starts the table refresh timer
+	start = timer()
 	while True:
+		loopNum += 1
+		print("Waiting for connection")
+		if(timer()-start > refreshTime):
+			ipAddress = pingIt(IPs)
+			start = timer()
+			print("Table has been refreshed")
+			
 		#Waits for a connection
+		print("Loop number: ", loopNum)
 		sock.listen(1)
 		connection_object, client_address = sock.accept()
 		
@@ -95,18 +124,26 @@ def main(argv):
 		#Receives the packet and parses the contents as need be
 		dataRequest = connection_object.recv(headerSize)
 		recievedNum = struct.unpack('>i', dataRequest)
-		if(recievedNum != randomNum):
-			#Log error
-			sock.close()
-		else:
-			balancerHead = struct.Struct('>ii')
-			header = balancerHead.pack(randomNum, ipSize)
-			connection_object.send(header)
-			connection_object.send(ipAddress)
-			recievedData = sock.recv(headerSize)
-			recievedNum = struct.unpack('>i', ack)
-			if(recievedNum != randomNum):
-				#Log an error
-				sock.close()
+		for i in (1,2,3,4,5):
+			if str(recievedNum)[i] != str(randomNum)[i-1]:
+				numMisMatch = True
+				break
 			else:
-				sock.close()
+				numMisMatch = False
+
+		if(numMisMatch == True):
+			#Log error
+			print("Error")
+			print(recievedNum)
+		else:
+			ipSize = len(str(ipAddress))
+			balancerHead = struct.Struct('>ii')
+			header = struct.pack('>ii',randomNum, ipSize)
+			connection_object.send(header)
+			ipBytes = str.encode(str(ipAddress))
+			connection_object.send(ipBytes)
+			recievedData = connection_object.recv(headerSize)
+			recievedNum = struct.unpack('>i', recievedData)
+			
+if __name__ == "__main__":
+   main(sys.argv[1:])
