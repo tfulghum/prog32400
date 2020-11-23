@@ -41,7 +41,7 @@ def main(argv):
 		print("Please use a valid integer for port value.")
 		sys.exit(2)
 
-	balancer_address = ('localhost', cPort)
+	balancer_address = (cAddr, cPort)
 	print("Connecting to...", balancer_address)
 	sock.connect(balancer_address)
 
@@ -68,7 +68,7 @@ def main(argv):
 	#Closes the connection with the load balancer after the IP is recieved
 	sock.close()
 	#serverAddress = (recievedIp, cPort)
-	serverAddress = ('localhost', 5555)
+	serverAddress = (recievedIp, 5555)
 	#Opens a connection with the recieved replica server and requests data
 	newSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 

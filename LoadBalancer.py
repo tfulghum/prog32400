@@ -64,6 +64,7 @@ def main(argv):
 	url = ''
 	log = ''
 	
+	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	#Get CL arguments
 	try:
 		opts, args = getopt.getopt(argv,"p:s:l:", ["PORT=","LOG="])
@@ -101,9 +102,9 @@ def main(argv):
 
 	#Starts the load balancer listener
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	server_address_object = ('localhost', port)
+	server_address_object = (socket.gethostbyname(socket.gethostname()), port)
 	sock.bind(server_address_object)
-	ipAddress = '192.168.1.1'
+	sock.bind(load_balancer_address)
 	loopNum = 0
 	#Starts the table refresh timer
 	start = timer()

@@ -71,7 +71,6 @@ def numCheck(numToTest):
 
 def main(argv):
 	#STEP 1 - create the socket object. This example uses TCP over IPv4
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	port = ''
 	url = ''
 	log = ''
@@ -96,7 +95,7 @@ def main(argv):
 		print("Please use a valid integer for port value.")
 		sys.exit(2)
 
-	server_address_object = ('localhost', port)
+	server_address_object = (socket.gethostbyname(socket.gethostname()), port)
 	sock.bind(server_address_object)
 
 	print("Sever is up and listening")
