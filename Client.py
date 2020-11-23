@@ -96,7 +96,7 @@ def main(argv):
 		counter += 1
 		print(counter)
 	
-	sleep(2)
+	newSock.shutdown(1)
 	newSock.close()
 if __name__ == "__main__":
    main(sys.argv[1:])
