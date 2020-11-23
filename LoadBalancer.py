@@ -52,8 +52,12 @@ def pingIt(serverIPs):
 		preferences[i] = calculatedVal
 		numErrors = 0
 		totalSent = 0
-	#return max(preferences)
-	return 1
+
+		logs = (f"Current preference: {preferences[i]} Next preference: {preferences[i+1]}")
+		print(f"Current preference: {preferences[i]} Next preference: {preferences[i+1]}")
+		logging.info(logs)
+	return max(preferences)
+	#return 1
 
 def main(argv):
 	port = ''

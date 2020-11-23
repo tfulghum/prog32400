@@ -84,6 +84,10 @@ def main(argv):
 		print(sys.getsizeof(recievedData))
 		print(payloadSize)
 		#Write to a file
+		logs = (f"Packet number {counter+1} received")
+		print(f"Packet number {counter+1} received")
+		logging.info(logs)
+
 
 		#Detects the last packet
 		if(payloadSize != MTU):
