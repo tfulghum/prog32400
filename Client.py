@@ -7,11 +7,11 @@ import os
 
 randNum = 12345
 finalACKNum = 12345
-headerSize = 12
+headerSize = 8
 
 #This is the size of the server payloads minus the header size
 #4 is the size of a bye and we recieve 2 of them
-MTU = 1500-(4*2)
+MTU = 1524
 
 def main(argv):
 	#Create TCP connection to load balancer
@@ -56,7 +56,7 @@ def main(argv):
 	s_head = sock.recv(headerSize)
 	print(sys.getsizeof(s_head))
 	recievedNum, payloadSize = struct.unpack('>ii', s_head)
-
+	print(payloadSize)
 	#Detects if the recieved number is the same as what it should be
 	if(recievedNum != randNum):
 		print("No bueno")
@@ -64,7 +64,6 @@ def main(argv):
 	recievedIp = sock.recv(payloadSize).decode()
 	header = packHeader.pack(randNum)
 	sock.sendall(header)
-
 
 	#Closes the connection with the load balancer after the IP is recieved
 	sock.close()
@@ -79,8 +78,11 @@ def main(argv):
 	counter = 0
 	while stillRecieving == True:
 		s_head = newSock.recv(headerSize)
+		print(s_head)
 		recievedNum, payloadSize = struct.unpack('>ii', s_head)
 		recievedData = newSock.recv(payloadSize).decode()
+		print(sys.getsizeof(recievedData))
+		print(payloadSize)
 		#Write to a file
 
 		#Detects the last packet
@@ -91,10 +93,9 @@ def main(argv):
 			newSock.sendall(finalACK)
 			print("End detected")
 		else:
-			print(header)
 			newSock.sendall(header)
 		counter += 1
-		print(counter)
+		print("Counter: ",counter)
 	
 	newSock.shutdown(1)
 	newSock.close()
