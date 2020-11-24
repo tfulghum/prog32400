@@ -12,7 +12,7 @@ headerSize = 8
 
 #This is the size of the server payloads minus the header size
 #4 is the size of a bye and we recieve 2 of them
-MTU = 1524
+MTU = 500
 
 def numCheck(numToTest):
 	for i in (0,1,2,3,4):
@@ -82,16 +82,15 @@ def main(argv):
 
 	s_head = sock.recv(headerSize)
 	receivedNum, payloadSize = struct.unpack('>ii', s_head)
-	print("Received num: ",receivedNum)
 	#Detects if the recieved number is the same as what it should be
 	randomNumCorrect, pingNumCorrect = numCheck(receivedNum)
 	if(randomNumCorrect != True):
-		print("No bueno")
+		print("Incorrect number")
 		#Log that the response was not correct and figure out what to do
 	receivedIp = sock.recv(payloadSize).decode()
 	header = packHeader.pack(randNum)
 	sock.sendall(header)
-	print(receivedIp)
+	print("Received IP: ",receivedIp)
 
 	#Closes the connection with the load balancer after the IP is recieved
 	sock.close()
@@ -103,14 +102,15 @@ def main(argv):
 	stillReceiving = True
 	counter = 0
 	while stillReceiving == True:
+		
+		#Sends the ack packet
 		newSock.sendall(header)
+		
+		#Receives in the new header and payload from server
 		s_head = newSock.recv(headerSize)
-		print("Header size: ", sys.getsizeof(s_head))
-		print(s_head)
 		receivedNum, payloadSize = struct.unpack('>ii', s_head)
-		receivedData = newSock.recv(payloadSize).decode()
-		print(sys.getsizeof(receivedData))
-		print("Payload size: ",payloadSize)
+		receivedData = newSock.recvfrom(payloadSize*2)
+		logs = receivedData
 		#Write to a file
 		logs = (f"Packet number {counter+1} received")
 		print(f"Packet number {counter+1} received")

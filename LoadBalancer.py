@@ -6,7 +6,7 @@ import logging
 import os
 from timeit import default_timer as timer
 
-headerSize = 12
+headerSize = 4
 randomNum = 12345
 pingNum = 54321
 totalSent = 0
@@ -51,17 +51,18 @@ def pingIt(serverIPs):
 	preferences = [None] * len(serverIPs)
 	print(preferences)
 	for k in serverIPs:
+		pingNumCorrect = False
 		currentAddress = k
 		totalSent = 0
-		currentConnection = (currentAddress, 5555)
+		currentConnection = (currentAddress, port)
 		sock.connect(currentConnection)
 		#Start timer here
 		sock.sendall(pingPacket)
-		
 		#Times the packet send to receive time
 		start = timer()
 		totalSent += 1
 		numErrors = 0		
+		
 		#Waits for a response
 		receivedData = sock.recv(headerSize)
 		receivedNum = struct.unpack('>i', receivedData)
@@ -180,8 +181,6 @@ def main(argv):
 			ipBytes = str.encode(str(ipAddress))
 			print("IP Bytes: ",ipBytes)
 			connection_object.send(ipBytes)
-			receivedData = connection_object.recv(headerSize)
-			receivedNum = struct.unpack('>i', receivedData)
 			
 if __name__ == "__main__":
    main(sys.argv[1:])

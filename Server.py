@@ -6,14 +6,14 @@ import logging
 import os
 import urllib.request, urllib.error, urllib.parse
 
-headerSize = 12
+headerSize = 4
 randomNum = 12345
 counter = 1
 pingNum = 54321
 
 #This is the size of the server payloads minus the header size
 #4 is the size of a bye and we recieve 2 of them
-MTU = 1524
+MTU = 500
 
 #Currently means the same as MTU but may change in the future
 packetSize = MTU
@@ -64,7 +64,6 @@ def numCheck(numToTest):
 				pingNumCorrect = True
 	else:
 		pingNumCorrect = False
-	print("End of function: ", randomNumCorrect, pingNumCorrect)
 	return randomNumCorrect, pingNumCorrect
 
 def main(argv):
@@ -113,17 +112,14 @@ def main(argv):
 		logging.info(logs)
 
 		dataRequest = connection_object.recv(headerSize)
-		print(dataRequest)
 		receivedNum = struct.unpack('>i', dataRequest)
 
 		randomNumCorrect, pingNumCorrect = numCheck(receivedNum)
-		print(randomNumCorrect, pingNumCorrect)
-
 
 		#Does logic for pinging request
 		if(pingNumCorrect == True):
 			header = struct.pack('>i',pingNum)
-			connection_object.send(header)
+			connection_object.sendall(header)
 			connection_object.shutdown(1)
 			pingNumCorrect = False
 		doneSending = False
@@ -131,19 +127,18 @@ def main(argv):
 		while(doneSending != True and randomNumCorrect == True):
 			#Creates payload and header and sends it
 
+			packHeader = struct.Struct('>ii')
 			currentPayload, doneSending = fileParser(downloadedHTML, counter)
 			packetSize = sys.getsizeof(currentPayload)
-			header = struct.pack('>ii',randomNum, packetSize)
-			print("Header size: ", sys.getsizeof(header))
-			connection_object.send(header)
-			print("Done sending: ", doneSending)
+			header = packHeader.pack(randomNum, packetSize)
+			connection_object.sendall(header)
 			#Sends HTML 
-			connection_object.send(currentPayload)
+			connection_object.sendall(currentPayload)
 
 			#Recieves data from the client
 			ack = connection_object.recv(headerSize)
-			print(ack)
 			receivedNum = struct.unpack('>i', ack)
+			print("Received packet number: ", counter+1)
 			randomNumCorrect, pingNumCorrect = numCheck(receivedNum)
 			if(randomNumCorrect == False):
 				#Log that the response was not correct and figure out what to do
