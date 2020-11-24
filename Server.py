@@ -13,11 +13,12 @@ pingNum = 54321
 
 #This is the size of the server payloads minus the header size
 #4 is the size of a bye and we recieve 2 of them
-MTU = 1500-(4*2)
+MTU = 1524
 
 #Currently means the same as MTU but may change in the future
 packetSize = MTU
 
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 #Gets the content of given url	
 def URLDownload(url):
@@ -30,7 +31,7 @@ def URLDownload(url):
     return html
 
 def fileParser(myFile, payloadNumber):
-	if len(myFile) < (MTU*payloadNumber)-1:
+	if sys.getsizeof(myFile) < (MTU*payloadNumber)-1:
 		finished = True
 				
 		return myFile[(payloadNumber-1)*MTU : len(myFile)], finished
@@ -45,11 +46,8 @@ def numCheck(numToTest):
 		if(str(numToTest)[i] != str(randomNum)[i-1]):
 			#Log that the response was not correct and figure out what to do
 			
-			print(str(numToTest)[i])
-			print(str(randomNum)[i-1])
 			logs = ("Incorrect response")
 			logging.info(logs)
-			print(logs)
 			randomNumCorrect = False
 			continue
 		else:
@@ -60,13 +58,13 @@ def numCheck(numToTest):
 				#Log that the response was not correct and figure out what to do
 				logs = ("Incorrect response")
 				logging.info(logs)
-				print(logs)
 				pingNumCorrect = False
 				continue
 			else:
 				pingNumCorrect = True
 	else:
 		pingNumCorrect = False
+	print("End of function: ", randomNumCorrect, pingNumCorrect)
 	return randomNumCorrect, pingNumCorrect
 
 def main(argv):
@@ -116,18 +114,18 @@ def main(argv):
 
 		dataRequest = connection_object.recv(headerSize)
 		print(dataRequest)
-		recievedNum = struct.unpack('>i', dataRequest)
+		receivedNum = struct.unpack('>i', dataRequest)
 
-		randomNumCorrect, pingNumCorrect = numCheck(recievedNum)
+		randomNumCorrect, pingNumCorrect = numCheck(receivedNum)
 		print(randomNumCorrect, pingNumCorrect)
 
 
 		#Does logic for pinging request
 		if(pingNumCorrect == True):
-			header = serverHead.pack(randomNum, 0)
+			header = struct.pack('>i',pingNum)
 			connection_object.send(header)
-			ack = connection_object.recv(headerSize)
-			recievedNum = struct.unpack('>i', ack)
+			connection_object.shutdown(1)
+			pingNumCorrect = False
 		doneSending = False
 		counter = 0
 		while(doneSending != True and randomNumCorrect == True):
@@ -145,8 +143,8 @@ def main(argv):
 			#Recieves data from the client
 			ack = connection_object.recv(headerSize)
 			print(ack)
-			recievedNum = struct.unpack('>i', ack)
-			randomNumCorrect, pingNumCorrect = numCheck(recievedNum)
+			receivedNum = struct.unpack('>i', ack)
+			randomNumCorrect, pingNumCorrect = numCheck(receivedNum)
 			if(randomNumCorrect == False):
 				#Log that the response was not correct and figure out what to do
 				logs = ("Incorrect reponse")

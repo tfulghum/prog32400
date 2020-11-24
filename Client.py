@@ -7,11 +7,38 @@ import os
 
 randNum = 12345
 finalACKNum = 12345
+pingNum = 54321
 headerSize = 8
 
 #This is the size of the server payloads minus the header size
 #4 is the size of a bye and we recieve 2 of them
 MTU = 1524
+
+def numCheck(numToTest):
+	for i in (0,1,2,3,4):
+		if(str(numToTest)[i] != str(randNum)[i]):
+			#Log that the response was not correct and figure out what to do
+			print("Num to test: ",str(numToTest)[i])
+			print("Rand num: ",str(randNum)[i])
+			logs = ("Incorrect response")
+			logging.info(logs)
+			randomNumCorrect = False
+			break
+		else:
+			randomNumCorrect = True
+	if(randomNumCorrect != True):
+		for i in (0,1,2,3,4):
+			if(str(numToTest)[i] != str(pingNum)[i-1]):
+				#Log that the response was not correct and figure out what to do
+				logs = ("Incorrect response")
+				logging.info(logs)
+				pingNumCorrect = False
+				continue
+			else:
+				pingNumCorrect = True
+	else:
+		pingNumCorrect = False
+	return randomNumCorrect, pingNumCorrect
 
 def main(argv):
 	#Create TCP connection to load balancer
@@ -54,35 +81,36 @@ def main(argv):
 	sock.sendall(header)
 
 	s_head = sock.recv(headerSize)
-	print(sys.getsizeof(s_head))
-	recievedNum, payloadSize = struct.unpack('>ii', s_head)
-	print(payloadSize)
+	receivedNum, payloadSize = struct.unpack('>ii', s_head)
+	print("Received num: ",receivedNum)
 	#Detects if the recieved number is the same as what it should be
-	if(recievedNum != randNum):
+	randomNumCorrect, pingNumCorrect = numCheck(receivedNum)
+	if(randomNumCorrect != True):
 		print("No bueno")
 		#Log that the response was not correct and figure out what to do
-	recievedIp = sock.recv(payloadSize).decode()
+	receivedIp = sock.recv(payloadSize).decode()
 	header = packHeader.pack(randNum)
 	sock.sendall(header)
+	print(receivedIp)
 
 	#Closes the connection with the load balancer after the IP is recieved
 	sock.close()
 	#serverAddress = (recievedIp, cPort)
-	serverAddress = (recievedIp, 5555)
 	#Opens a connection with the recieved replica server and requests data
 	newSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+	serverAddress = (receivedIp, 5555)
 	newSock.connect(serverAddress)
-	newSock.sendall(header)
-	stillRecieving = True
+	stillReceiving = True
 	counter = 0
-	while stillRecieving == True:
+	while stillReceiving == True:
+		newSock.sendall(header)
 		s_head = newSock.recv(headerSize)
+		print("Header size: ", sys.getsizeof(s_head))
 		print(s_head)
-		recievedNum, payloadSize = struct.unpack('>ii', s_head)
-		recievedData = newSock.recv(payloadSize).decode()
-		print(sys.getsizeof(recievedData))
-		print(payloadSize)
+		receivedNum, payloadSize = struct.unpack('>ii', s_head)
+		receivedData = newSock.recv(payloadSize).decode()
+		print(sys.getsizeof(receivedData))
+		print("Payload size: ",payloadSize)
 		#Write to a file
 		logs = (f"Packet number {counter+1} received")
 		print(f"Packet number {counter+1} received")
@@ -90,8 +118,8 @@ def main(argv):
 
 
 		#Detects the last packet
-		if(payloadSize != MTU):
-			stillRecieving = False;
+		if(payloadSize < MTU):
+			stillReceiving = False;
 			#Send final ACK
 			finalACK = packHeader.pack(finalACKNum)
 			newSock.sendall(finalACK)
