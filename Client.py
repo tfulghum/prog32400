@@ -12,7 +12,7 @@ headerSize = 8
 
 #This is the size of the server payloads minus the header size
 #4 is the size of a bye and we recieve 2 of them
-MTU = 500
+MTU = 532
 
 def numCheck(numToTest):
 	for i in (0,1,2,3,4):
@@ -107,27 +107,33 @@ def main(argv):
 		newSock.sendall(header)
 		
 		#Receives in the new header and payload from server
-		s_head = newSock.recv(headerSize)
-		receivedNum, payloadSize = struct.unpack('>ii', s_head)
-		receivedData = newSock.recvfrom(payloadSize*2)
-		logs = receivedData
-		#Write to a file
-		logs = (f"Packet number {counter+1} received")
-		print(f"Packet number {counter+1} received")
-		logging.info(logs)
-
-
-		#Detects the last packet
-		if(payloadSize < MTU):
-			stillReceiving = False;
-			#Send final ACK
-			finalACK = packHeader.pack(finalACKNum)
-			newSock.sendall(finalACK)
-			print("End detected")
+		s_head = newSock.recvfrom(headerSize)
+		receivedNum, payloadSize = struct.unpack('>ii', s_head[0][:8])
+		if(payloadSize < 0 and receivedNum != randNum):
+			payloadSize = MTU
+		elif(payloadSize > MTU and receivedNum != randNum):
+			print("Bad packet received")
+			payloadSize = MTU
+			newSock.recvfrom(payloadSize*10)
 		else:
-			newSock.sendall(header)
-		counter += 1
-		print("Counter: ",counter)
+			receivedData = newSock.recvfrom(payloadSize*10)
+			logs = receivedData
+			#Write to a file
+			logs = (f"Packet number {counter+1} received")
+			print(f"Packet number {counter+1} received")
+			logging.info(logs)
+
+
+			#Detects the last packet
+			if(receivedNum == 54321):
+				stillReceiving = False;
+				#Send final ACK
+				finalACK = packHeader.pack(finalACKNum)
+				newSock.sendall(finalACK)
+				print("End detected")
+			else:
+				newSock.sendall(header)
+			counter += 1
 	
 	newSock.shutdown(1)
 	newSock.close()

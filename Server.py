@@ -95,8 +95,6 @@ def main(argv):
 	server_address_object = (socket.gethostbyname(socket.gethostname()), port)
 	sock.bind(server_address_object)
 
-	print("Sever is up and listening")
-
 	#STEP 3 - do the actual listening
 	sock.listen(1)
 	goFlag = 1
@@ -106,13 +104,15 @@ def main(argv):
 
 	#Loop lets us get multiple packets
 	while True:
+		print("Listening...")
 		connection_object, client_address = sock.accept()
 		logs = ("Received connection from", client_address[0], client_address[1])
 		print("Received connection from", client_address)
 		logging.info(logs)
 
-		dataRequest = connection_object.recv(headerSize)
-		receivedNum = struct.unpack('>i', dataRequest)
+		dataRequest = connection_object.recvfrom(headerSize)
+		print(dataRequest[0])
+		receivedNum = struct.unpack('>i', dataRequest[0])
 
 		randomNumCorrect, pingNumCorrect = numCheck(receivedNum)
 
@@ -129,15 +129,21 @@ def main(argv):
 
 			packHeader = struct.Struct('>ii')
 			currentPayload, doneSending = fileParser(downloadedHTML, counter)
+			print("Done sending: ", doneSending)
+			if(doneSending == True):
+				randomNum = 54321
+			else:
+				randomNum = 12345
 			packetSize = sys.getsizeof(currentPayload)
 			header = packHeader.pack(randomNum, packetSize)
+			print("Header size: ", sys.getsizeof(header))
 			connection_object.sendall(header)
 			#Sends HTML 
 			connection_object.sendall(currentPayload)
 
 			#Recieves data from the client
-			ack = connection_object.recv(headerSize)
-			receivedNum = struct.unpack('>i', ack)
+			ack = connection_object.recvfrom(headerSize)
+			receivedNum = struct.unpack('>i', ack[0])
 			print("Received packet number: ", counter+1)
 			randomNumCorrect, pingNumCorrect = numCheck(receivedNum)
 			if(randomNumCorrect == False):
