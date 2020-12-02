@@ -70,8 +70,12 @@ def main(argv):
 
 	balancer_address = (cAddr, cPort)
 	print("Connecting to...", balancer_address)
-	sock.connect(balancer_address)
+	try:
+		sock.connect(balancer_address)
 
+	except:
+		print("Error: Incorrect port number")
+		sys.exit(2)
 	print("Yay! connected to...", balancer_address)
 
 	#Creates a standard header and sends to the load balancer
@@ -82,6 +86,7 @@ def main(argv):
 
 	s_head = sock.recv(headerSize)
 	receivedNum, payloadSize = struct.unpack('>ii', s_head)
+	
 	#Detects if the recieved number is the same as what it should be
 	randomNumCorrect, pingNumCorrect = numCheck(receivedNum)
 	if(randomNumCorrect != True):
@@ -118,6 +123,7 @@ def main(argv):
 		else:
 			receivedData = newSock.recvfrom(payloadSize*10)
 			logs = receivedData
+			
 			#Write to a file
 			logs = (f"Packet number {counter+1} received")
 			print(f"Packet number {counter+1} received")

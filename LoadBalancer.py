@@ -48,14 +48,18 @@ def numCheck(numToTest):
 def pingIt(serverIPs):
 	pingPacket = packHeader.pack(pingNum)
 	count = 0
+	port = 5555
 	preferences = [None] * len(serverIPs)
-	print(preferences)
 	for k in serverIPs:
 		pingNumCorrect = False
 		currentAddress = k
 		totalSent = 0
 		currentConnection = (currentAddress, port)
-		sock.connect(currentConnection)
+		try:
+			sock.connect(currentConnection)
+		except:
+			print("Error: Endpoint is already connected")
+			continue
 		#Start timer here
 		sock.sendall(pingPacket)
 		#Times the packet send to receive time
@@ -78,6 +82,7 @@ def pingIt(serverIPs):
 			receivedData = sock.recv(headerSize)
 			receivedNum = struct.unpack('>ii', receivedData)
 			randomNumCorrect, pingNumCorrect = numCheck(receivedNum)
+		sock.shutdown(1)
 		
 		#Calculates time and weight
 		end = timer()
@@ -87,17 +92,27 @@ def pingIt(serverIPs):
 		preferences[count] = calculatedVal
 		numErrors = 0
 
-		#logs = (f"Current preference: {preferences[count]} Next preference: {preferences[count+1]}")
-		#print(f"Current preference: {preferences[count]} Next preference: {preferences[count+1]}")
-		#logging.info(logs)
 		sock.shutdown(1)
+	prefCount = 0
+
+	for i in preferences:
+		if(max(preferences) == i):
+			firstPref = serverIPs[prefCount]
+			preferences.pop(prefCount)
+		else:
+			prefCount += 1
+
 	prefCount = 0
 	for i in preferences:
 		if(max(preferences) == i):
-			return serverIPs[prefCount]
+			secondPref = serverIPs[prefCount]
+			logs = f"Second preference: {secondPref}"
+			logging.info(logs)
+			print(logs)
 		else:
 			prefCount += 1
-	#return 1
+
+	return firstPref
 
 def main(argv):
 	port = ''
@@ -131,7 +146,6 @@ def main(argv):
 		sys.exit(2)
 	#Calculates the best IP for client use
 	ipAddress = pingIt(lines)
-	print("Ping complete")
 
 	#Starts the load balancer listener
 	server_address_object = (socket.gethostbyname(socket.gethostname()), port)
@@ -144,12 +158,12 @@ def main(argv):
 		loopNum += 1
 		print("Waiting for connection")
 		if(timer()-start > refreshTime):
+			sock.shutdown(1)
 			ipAddress = pingIt(lines)
 			start = timer()
 			print("Table has been refreshed")
 			
 		#Waits for a connection
-		print("Loop number: ", loopNum)
 		sock.listen(1)
 		connection_object, client_address = sock.accept()
 		
@@ -159,28 +173,32 @@ def main(argv):
 		logging.info(logs)
 		
 		#Receives the packet and parses the contents as need be
-		dataRequest = connection_object.recv(headerSize)
-		receivedNum = struct.unpack('>i', dataRequest)
-		for i in (1,2,3,4,5):
-			if str(receivedNum)[i] != str(randomNum)[i-1]:
-				numMisMatch = True
-				break
-			else:
-				numMisMatch = False
+		try:
+			dataRequest = connection_object.recv(headerSize)
+			receivedNum = struct.unpack('>i', dataRequest)
+			for i in (1,2,3,4,5):
+				if str(receivedNum)[i] != str(randomNum)[i-1]:
+					numMisMatch = True
+					break
+				else:
+					numMisMatch = False
 
-		if(numMisMatch == True):
-			#Log error
-			print("Error")
-			print(receivedNum)
-		else:
-			ipSize = sys.getsizeof(ipAddress)
-			balancerHead = struct.Struct('>ii')
-			header = struct.pack('>ii',randomNum, ipSize)
-			print("Header: ", header, " Ip size: ", ipSize)
-			connection_object.send(header)
-			ipBytes = str.encode(str(ipAddress))
-			print("IP Bytes: ",ipBytes)
-			connection_object.send(ipBytes)
-			
+			if(numMisMatch == True):
+				#Log error
+				print("Error: Number mismatch")
+			else:
+				ipSize = sys.getsizeof(ipAddress)
+				balancerHead = struct.Struct('>ii')
+				header = struct.pack('>ii',randomNum, ipSize)
+				connection_object.send(header)
+				logs = f"Request from {client_address}. Redirecting to {ipAddress}"
+				logging.info(logs)
+				print(logs)
+				ipBytes = str.encode(str(ipAddress))
+				connection_object.send(ipBytes)
+		except:
+			logs = f"Error: Unable to handle request between {client_address}, {ipAddress}, Unable to communicate with client"
+			logging.info(logs)
+			print(logs)
 if __name__ == "__main__":
    main(sys.argv[1:])

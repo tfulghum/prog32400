@@ -111,7 +111,6 @@ def main(argv):
 		logging.info(logs)
 
 		dataRequest = connection_object.recvfrom(headerSize)
-		print(dataRequest[0])
 		receivedNum = struct.unpack('>i', dataRequest[0])
 
 		randomNumCorrect, pingNumCorrect = numCheck(receivedNum)
@@ -129,14 +128,12 @@ def main(argv):
 
 			packHeader = struct.Struct('>ii')
 			currentPayload, doneSending = fileParser(downloadedHTML, counter)
-			print("Done sending: ", doneSending)
 			if(doneSending == True):
 				randomNum = 54321
 			else:
 				randomNum = 12345
 			packetSize = sys.getsizeof(currentPayload)
 			header = packHeader.pack(randomNum, packetSize)
-			print("Header size: ", sys.getsizeof(header))
 			connection_object.sendall(header)
 			#Sends HTML 
 			connection_object.sendall(currentPayload)
@@ -144,7 +141,6 @@ def main(argv):
 			#Recieves data from the client
 			ack = connection_object.recvfrom(headerSize)
 			receivedNum = struct.unpack('>i', ack[0])
-			print("Received packet number: ", counter+1)
 			randomNumCorrect, pingNumCorrect = numCheck(receivedNum)
 			if(randomNumCorrect == False):
 				#Log that the response was not correct and figure out what to do
@@ -153,5 +149,10 @@ def main(argv):
 				print(logs)
 			else:
 				counter += 1
+	#Logs the end of an interation
+	logs = f"Done sending to: {client_address}"
+	logging.info(logs)
+	print(logs)
+	sock.shutdown(1)
 if __name__ == "__main__":
    main(sys.argv[1:])
